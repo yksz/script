@@ -50,7 +50,7 @@ class Game {
 
     def _processInput() {}
     def _update() {}
-    def _render(def g, def o) {}
+    def _render(g, o) {}
 
     class GameScreen extends JPanel {
         void paintComponent(Graphics g) {
@@ -110,7 +110,7 @@ class Tetris extends Game {
         count++
     }
 
-    def _render(def g, def o) {
+    def _render(g, o) {
         _drawField(g)
         _drawTetrimino(g)
     }
