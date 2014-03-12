@@ -64,11 +64,11 @@ class Tetris extends Game {
 
     static def SPEED = Game.PERIOD * 0.2
     static def TITLE = "Tetris"
-    static def BLOCK_SIZE = 20
+    static def CELL_SIZE = 20
     static def FIELD_WIDTH = 10
     static def FIELD_HEIGHT = 20
-    static def SCREEN_WIDTH = BLOCK_SIZE * FIELD_WIDTH
-    static def SCREEN_HEIGHT = BLOCK_SIZE * FIELD_HEIGHT
+    static def SCREEN_WIDTH = CELL_SIZE * FIELD_WIDTH
+    static def SCREEN_HEIGHT = CELL_SIZE * FIELD_HEIGHT
     static def OFFSET = 1
     static def COLORS = [0: Color.BLACK,
                          1: Color.CYAN,
@@ -120,7 +120,7 @@ class Tetris extends Game {
             for (x in 0..<FIELD_WIDTH) {
                 def val = field.cells[y][x]
                 g.setColor(COLORS[val])
-                _drawBlock(g, x, y)
+                _drawCell(g, x, y)
             }
         }
     }
@@ -132,15 +132,15 @@ class Tetris extends Game {
                 def val = tetrimino.shape[j][i]
                 if (val) {
                     g.setColor(COLORS[val])
-                    _drawBlock(g, i + tetrimino.x, j + tetrimino.y)
+                    _drawCell(g, i + tetrimino.x, j + tetrimino.y)
                 }
             }
         }
     }
 
-    def _drawBlock(g, x, y) {
-        g.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE,
-                BLOCK_SIZE - OFFSET, BLOCK_SIZE - OFFSET)
+    def _drawCell(g, x, y) {
+        g.fillRect(x * CELL_SIZE, y * CELL_SIZE,
+                CELL_SIZE - OFFSET, CELL_SIZE - OFFSET)
     }
 
 }
