@@ -62,7 +62,8 @@ class Game {
 
 class Tetris extends Game {
 
-    static def SPEED = Game.PERIOD * 0.2
+    static def SPEED = 2 // [/sec]
+    static def TIME = 1000 / SPEED // [ms]
     static def TITLE = "Tetris"
     static def CELL_SIZE = 20
     static def FIELD_WIDTH = 10
@@ -80,34 +81,42 @@ class Tetris extends Game {
                          7: Color.MAGENTA]
 
     def field = new Field(FIELD_WIDTH, FIELD_HEIGHT)
-    Integer count = 0
+    long waitingTime, pastTime
 
     Tetris() {
         super(TITLE, SCREEN_WIDTH, SCREEN_HEIGHT)
     }
 
     def _processInput() {
-        if (keys.contains(KeyEvent.VK_Q)) {
+        if (keys.contains(KeyEvent.VK_Q))
             System.exit(0)
-        } else if (keys.contains(KeyEvent.VK_UP)) {
+        else if (keys.contains(KeyEvent.VK_UP))
             field.rotateTetrimino()
-        } else if (keys.contains(KeyEvent.VK_DOWN)) {
+        else if (keys.contains(KeyEvent.VK_DOWN))
             field.dropTetrimino()
-        } else if (keys.contains(KeyEvent.VK_LEFT)) {
+        else if (keys.contains(KeyEvent.VK_LEFT))
             field.moveTetriminoToLeft()
-        } else if (keys.contains(KeyEvent.VK_RIGHT)) {
+        else if (keys.contains(KeyEvent.VK_RIGHT))
             field.moveTetriminoToRight()
-        } else {
-        }
         keys.clear()
     }
 
     def _update() {
-        if (count > SPEED) {
-            field.dropTetrimino()
-            count = 0
+        if (_wait(TIME))
+            return
+        field.dropTetrimino()
+    }
+
+    def _wait(time) {
+        long currentTime = System.currentTimeMillis()
+        waitingTime += currentTime - pastTime
+        pastTime = currentTime
+        if (waitingTime < time) {
+            return true
+        } else {
+            waitingTime = 0
+            return false
         }
-        count++
     }
 
     def _render(g, o) {
