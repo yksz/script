@@ -61,7 +61,7 @@ def printAvailableCharsets() {
 def cli = new CliBuilder(usage: 'cconv - charset converter')
 cli.f(args:1, 'from encording')
 cli.t(args:1, 'to encording')
-cli.s(args:1, 'src file or src extension(e.g. "*.txt")')
+cli.s(args:1, 'search for files by filepath or regexp(e.g. "/.*\\.txt/")')
 cli.l('print lists of available charsets')
 cli.h(longOpt:'help', 'print this message')
 def opt = cli.parse(args)
@@ -83,10 +83,10 @@ if (!opt.f || !opt.t || !opt.s) {
 }
 def from = opt.f
 def to = opt.t
-if (opt.s ==~ /^\*\..*$/) {
-    def ext = opt.s
+if (opt.s ==~ '^/.*/$') {
+    def regexp = opt.s.substring(1, opt.s.length() - 1)
     new File('.').eachFileRecurse {
-        if (it.isFile() && it.name =~ /.*\.$ext/) {
+        if (it.isFile() && it.name =~ regexp) {
             def src = it.getCanonicalPath()
             println src
             convertCharset(from, to, src)
@@ -94,6 +94,10 @@ if (opt.s ==~ /^\*\..*$/) {
     }
 } else {
     def src = opt.s
+    if (!new File(src).exists()) {
+        System.err.println 'no such file: ' + src
+        System.exit(1)
+    }
     println src
     convertCharset(from, to, src)
 }
