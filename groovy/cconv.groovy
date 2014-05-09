@@ -1,3 +1,5 @@
+#!/usr/bin/env groovy
+
 import java.nio.charset.Charset
 
 def convertCharset(from, to, src) {
