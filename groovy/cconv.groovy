@@ -69,16 +69,15 @@ def printAvailableCharsets() {
 }
 
 
-def cli = new CliBuilder(usage: 'cconv - charset converter')
-cli.f(args:1, 'from encording')
-cli.t(args:1, 'to encording')
-cli.s(args:1, 'search for files by path or regexp(e.g. "/.*\\.txt/")')
-cli.l('print lists of available charsets')
-cli.h(longOpt:'help', 'print this message')
-def opt = cli.parse(args)
-if (!opt) {
-    System.exit(1)
+def cli = new CliBuilder(usage: 'cconv.groovy <path> or <regexp>\n'
+                              + 'e.g. cconv.groovy -f euc-jp -t utf-8 "/.*\\.txt/"')
+cli.with {
+    f args:1, 'from encording'
+    t args:1, 'to encording'
+    l 'print lists of available charsets'
+    h longOpt:'help', 'print this message'
 }
+def opt = cli.parse(args)
 if (opt.h) {
     cli.usage()
     System.exit(0)
@@ -87,28 +86,30 @@ if (opt.l) {
     printAvailableCharsets()
     System.exit(0)
 }
-if (!opt.f || !opt.t || !opt.s) {
-    println 'error: Missing required options: f, t, s'
+if (!opt.f || !opt.t) {
+    println 'error: Missing required options: f, t'
     cli.usage()
     System.exit(1)
 }
 def from = opt.f
 def to = opt.t
-if (opt.s ==~ '^/.*/$') {
-    def regexp = opt.s.substring(1, opt.s.length() - 1)
-    new File('.').eachFileRecurse {
-        if (it.isFile() && !isBinaryFile(it) && it.name =~ regexp) {
-            def src = it.getCanonicalPath()
-            println src
-            convertCharset(from, to, src)
+for (arg in opt.arguments()) {
+    if (arg ==~ '^/.*/$') {
+        def regexp = arg.substring(1, arg.length() - 1)
+        new File('.').eachFileRecurse {
+            if (it.isFile() && !isBinaryFile(it) && it.name =~ regexp) {
+                def src = it.getCanonicalPath()
+                println src
+                convertCharset(from, to, src)
+            }
         }
+    } else {
+        def src = arg
+        if (!new File(src).exists()) {
+            System.err.println 'no such file: ' + src
+            System.exit(1)
+        }
+        println src
+        convertCharset(from, to, src)
     }
-} else {
-    def src = opt.s
-    if (!new File(src).exists()) {
-        System.err.println 'no such file: ' + src
-        System.exit(1)
-    }
-    println src
-    convertCharset(from, to, src)
 }
