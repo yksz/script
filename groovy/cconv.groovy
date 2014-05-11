@@ -3,6 +3,14 @@
 import java.nio.charset.Charset
 
 def convertCharset(from, to, src) {
+    def srcFile = new File(src)
+    if (!srcFile.exists()) {
+        System.err.println 'no such file: ' + src
+        return
+    }
+    if (srcFile.isDirectory() || isBinaryFile(srcFile))
+        return
+    println src
     def dst = src + ".tmp"
     convertCharset(from, to, src, dst)
     moveFile(dst, src)
@@ -20,6 +28,18 @@ def convertCharset(from, to, src, dst) {
     } finally {
         reader.close()
         writer.close()
+    }
+}
+
+def isBinaryFile(file) {
+    def input = new FileInputStream(file)
+    try {
+        for (def b; (b = input.read()) != -1;)
+            if (b == 0)
+                return true
+        return false
+    } finally {
+        input.close()
     }
 }
 
@@ -50,18 +70,6 @@ def copy(input, output) {
     }
 }
 
-def isBinaryFile(path) {
-    def input = new FileInputStream(path)
-    try {
-        for (def b; (b = input.read()) != -1;)
-            if (b == 0)
-                return true
-        return false
-    } finally {
-        input.close()
-    }
-}
-
 def printAvailableCharsets() {
     def map = Charset.availableCharsets()
     for (name in map.keySet())
@@ -69,7 +77,7 @@ def printAvailableCharsets() {
 }
 
 
-def cli = new CliBuilder(usage: 'cconv.groovy <path> or <regexp>\n'
+def cli = new CliBuilder(usage: 'cconv.groovy [-options] filepath|regexp\n'
                               + 'e.g. cconv.groovy -f euc-jp -t utf-8 "/.*\\.txt/"')
 cli.with {
     f args:1, 'from encording'
@@ -97,19 +105,11 @@ for (arg in opt.arguments()) {
     if (arg ==~ '^/.*/$') {
         def regexp = arg.substring(1, arg.length() - 1)
         new File('.').eachFileRecurse {
-            if (it.isFile() && !isBinaryFile(it) && it.name =~ regexp) {
-                def src = it.getCanonicalPath()
-                println src
-                convertCharset(from, to, src)
+            if (it.name =~ regexp) {
+                convertCharset(from, to, it.getCanonicalPath())
             }
         }
     } else {
-        def src = arg
-        if (!new File(src).exists()) {
-            System.err.println 'no such file: ' + src
-            System.exit(1)
-        }
-        println src
-        convertCharset(from, to, src)
+        convertCharset(from, to, arg)
     }
 }
