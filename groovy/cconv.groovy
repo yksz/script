@@ -1,4 +1,5 @@
 #!/usr/bin/env groovy
+// charset converter
 
 import java.nio.charset.Charset
 
@@ -105,9 +106,8 @@ for (arg in opt.arguments()) {
     if (arg ==~ '^/.*/$') {
         def regexp = arg.substring(1, arg.length() - 1)
         new File('.').eachFileRecurse {
-            if (it.name =~ regexp) {
+            if (it.name =~ regexp)
                 convertCharset(from, to, it.getCanonicalPath())
-            }
         }
     } else {
         convertCharset(from, to, arg)
