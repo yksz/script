@@ -6,6 +6,7 @@ class ConnThread extends Thread {
     def cid
     def socket
     def input, output
+    def savemode = false
 
     ConnThread(id, socket) {
         this.cid = id
@@ -13,7 +14,7 @@ class ConnThread extends Thread {
     }
 
     void run() {
-        println "connected: id=${cid}, ip=${socket.getInetAddress()}"
+        println "connected: id=$cid, ip=${socket.getInetAddress()}"
         input = new BufferedInputStream(socket.getInputStream())
         output = new BufferedOutputStream(socket.getOutputStream())
         while (true) {
@@ -23,7 +24,7 @@ class ConnThread extends Thread {
         input.close()
         output.close()
         socket.close()
-        println "disconnected: id=${cid}"
+        println "disconnected: id=$cid"
     }
 
     def process() {
@@ -35,6 +36,8 @@ class ConnThread extends Thread {
             def body = readBody(len)
             def bytes = makeResponse(method, headers, body)
             writeResponse(bytes)
+            if (savemode)
+                saveRequest(bytes)
             return keepAlive
         }
         return false
@@ -114,15 +117,24 @@ class ConnThread extends Thread {
         output.flush()
     }
 
+    def saveRequest(contents) {
+        def filename = "request-${cid}.txt"
+        println "save a request: id=$cid, file=$filename"
+        new File(filename).withOutputStream {
+            it.write contents
+        }
+    }
+
 }
 
-def runServer(port) {
+def runServer(port, savemode) {
     def server = new ServerSocket(port)
-    println "the http server started: port=$port"
-    int id = 0
+    println "the echo server started: port=$port"
+    def id = 0L
     while (true) {
         def socket = server.accept()
         connThread = new ConnThread(id++, socket)
+        connThread.savemode = savemode
         connThread.start()
     }
 }
@@ -131,6 +143,7 @@ def runServer(port) {
 def cli = new CliBuilder(usage: 'echo.groovy [-options]')
 cli.with {
     p args:1, 'port'
+    s 'save a request into a file'
     h longOpt:'help', 'print this message'
 }
 def opt = cli.parse(args)
@@ -142,4 +155,4 @@ def port = 8080
 if (opt.p) {
     port = opt.p as int
 }
-runServer(port)
+runServer(port, opt.s)
