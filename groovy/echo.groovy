@@ -44,8 +44,10 @@ class ConnThread extends Thread {
         def buf = new StringBuilder()
         while (true) {
             int c = input.read()
-            if (c == -1 || (c == '\r' && input.read() == '\n') || c == '\n')
+            if (c == -1)
                 return buf.length() > 0 ? buf.toString() : null
+            else if ((c == '\r' && input.read() == '\n') || c == '\n')
+                return buf.toString()
             else
                 buf.append((char) c)
         }
@@ -58,17 +60,14 @@ class ConnThread extends Thread {
             if (line == null || line.trim().isEmpty())
                 break
             def s = line.split(':')
-            if (s.length > 1)
-                headers[s[0]] = s[1].trim().toLowerCase()
-            else
-                headers[null] = s[0]
+            headers[s[0]] = (s.length > 1) ? s[1].trim() : null
         }
         return headers
     }
 
     def getKeepAlive(headers) {
         def v = headers['Connection']
-        return v != 'close'
+        return !v.equalsIgnoreCase('close')
     }
 
     def getContentLength(headers) {
@@ -103,7 +102,7 @@ class ConnThread extends Thread {
         def buf = new StringBuilder()
         buf.append 'HTTP/1.1 200 OK\n'
         buf.append 'Content-Type: text/plain; charset=utf-8\n'
-        buf.append "Content-Length: ${len}\n"
+        buf.append "Content-Length: $len\n"
         buf.append 'Connection: close\n'
         buf.append '\n'
         output.write buf.toString().getBytes()
