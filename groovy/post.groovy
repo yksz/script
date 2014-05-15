@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
-// POST request for http
+// HTTP POST request
 
 def postRequest(url, params) {
     def conn = new URL(url).openConnection()
@@ -8,29 +8,37 @@ def postRequest(url, params) {
     conn.setUseCaches(false);
     conn.setInstanceFollowRedirects(false)
     conn.connect()
-    def writer = new PrintWriter(conn.getOutputStream())
-    writer.print params
-    writer.flush()
-    writer.close()
+    conn.getOutputStream().withPrintWriter {
+        it.print params
+    }
     println '[ HTTP Headers ]'
-    conn.getHeaderFields().each { e ->
-        print e.key ? "${e.key}: " : ''
-        println e.value.join('; ')
+    conn.getHeaderFields().each { key, val ->
+        print key ? "$key: " : ''
+        println val.join('; ')
     }
     println ''
     println '[ HTTP Body ]'
-    def body = new BufferedReader(new InputStreamReader(conn.getInputStream()))
-    for (def line = null; (line = body.readLine()) != null;)
-        println line
-    body.close()
+    def charset = getCharset(conn.getContentType())
+    conn.getInputStream().newReader(charset).eachLine {
+        println it
+    }
     conn.disconnect()
 }
 
+def getCharset(contentType, defaultValue='utf-8') {
+    for (s in contentType?.split(';')) {
+        s = s.trim()
+        if (s.startsWith('charset='))
+            return s.substring('charset='.length())
+    }
+    return defaultValue
+}
 
-def cli = new CliBuilder(usage: 'post.groovy [-options] URL')
+
+def cli = new CliBuilder(usage: 'post.groovy [options] <url>')
 cli.with {
-    p args:1, 'post parameters'
-    f args:1, 'a file on post parameters'
+    p args:1, argName:'params', 'post parameters'
+    f args:1, argName:'filename', 'a file on post parameters'
     h longOpt:'help', 'print this message'
 }
 def opt = cli.parse(args)

@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
-// GET request for http
+// HTTP GET request
 
 def getRequest(url) {
     def conn = new URL(url).openConnection()
@@ -7,22 +7,31 @@ def getRequest(url) {
     conn.setInstanceFollowRedirects(false);
     conn.connect()
     println '[ HTTP Headers ]'
-    conn.getHeaderFields().each { e ->
-        print e.key ? "${e.key}: " : ''
-        println e.value.join('; ')
+    conn.getHeaderFields().each { key, val ->
+        print key ? "$key: " : ''
+        println val.join('; ')
     }
     println ''
     println '[ HTTP Body ]'
-    def body = new BufferedReader(new InputStreamReader(conn.getInputStream()))
-    for (def line = null; (line = body.readLine()) != null;)
-        println line
-    body.close()
+    def charset = getCharset(conn.getContentType())
+    conn.getInputStream().newReader(charset).eachLine {
+        println it
+    }
     conn.disconnect()
+}
+
+def getCharset(contentType, defaultValue='utf-8') {
+    for (s in contentType?.split(';')) {
+        s = s.trim()
+        if (s.startsWith('charset='))
+            return s.substring('charset='.length())
+    }
+    return defaultValue
 }
 
 
 if (args.length < 1) {
-    println 'usage: get.groovy URL'
+    println 'usage: get.groovy <url>'
     System.exit(1)
 }
 getRequest(args[0])
