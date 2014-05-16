@@ -3,86 +3,66 @@
 
 import java.nio.charset.Charset
 
-def convertCharset(from, to, src) {
-    def srcFile = new File(src)
+def convertCharset(from, to, srcPath) {
+    def srcFile = new File(srcPath)
     if (!srcFile.exists()) {
-        System.err.println 'no such file: ' + src
+        println "no such file: $srcPath"
         return
     }
     if (srcFile.isDirectory() || isBinaryFile(srcFile))
         return
-    println src
-    def dst = src + ".tmp"
-    convertCharset(from, to, src, dst)
-    moveFile(dst, src)
+    println srcPath
+    def dstFile = new File("${srcPath}.tmp")
+    convertCharset(from, to, srcFile, dstFile)
+    moveFile(dstFile, srcFile)
 }
 
-def convertCharset(from, to, src, dst) {
-    def input  = new FileInputStream(src)
-    def output = new FileOutputStream(dst)
-    def reader = new InputStreamReader(input, from)
-    def writer = new OutputStreamWriter(output, to)
-    try {
-        for (def c; (c = reader.read()) != -1;)
-            writer.write(c)
-        writer.flush()
-    } finally {
-        reader.close()
-        writer.close()
+def convertCharset(from, to, srcFile, dstFile) {
+    srcFile.withReader(from) { reader ->
+        dstFile.withPrintWriter(to) { writer ->
+            for (line in reader)
+                writer.println line
+        }
     }
 }
 
 def isBinaryFile(file) {
-    def input = new FileInputStream(file)
-    try {
-        for (def b; (b = input.read()) != -1;)
+    file.withInputStream { input ->
+        for (b in input)
             if (b == 0)
                 return true
         return false
-    } finally {
-        input.close()
     }
 }
 
-def moveFile(src, dst) {
-    def srcFile = new File(src)
-    def ok = srcFile.renameTo(dst)
+def moveFile(srcFile, dstFile) {
+    def ok = srcFile.renameTo(dstFile)
     if (!ok) {
-        copyFile(src, dst)
+        copyFile(srcFile, dstFile)
         srcFile.delete()
     }
 }
 
-def copyFile(src, dst) {
-    def input  = new FileInputStream(src)
-    def output = new FileOutputStream(dst)
-    copy(input, output)
-}
-
-def copy(input, output) {
-    def buf = new byte[1024]
-    try {
-        for (def len; (len = input.read(buf)) != -1;)
-            output.write(buf, 0, len)
-        output.flush();
-    } finally {
-        input.close()
-        output.close()
-    }
+def copyFile(srcFile, dstFile) {
+    def input = srcFile.newInputStream()
+    def output = dstFile.newOutputStream()
+    output << input
+    input.close()
+    output.close()
 }
 
 def printAvailableCharsets() {
-    def map = Charset.availableCharsets()
-    for (name in map.keySet())
-        println name
+    Charset.availableCharsets().each {
+        println it.key
+    }
 }
 
 
-def cli = new CliBuilder(usage: 'cconv.groovy [-options] filepath|regexp\n'
+def cli = new CliBuilder(usage: 'cconv.groovy [options] <filepath> | <regexp>\n'
                               + 'e.g. cconv.groovy -f euc-jp -t utf-8 "/.*\\.txt/"')
 cli.with {
-    f args:1, 'from encording'
-    t args:1, 'to encording'
+    f args:1, argName:'charset', 'from encording'
+    t args:1, argName:'charset', 'to encording'
     l 'print lists of available charsets'
     h longOpt:'help', 'print this message'
 }
@@ -102,12 +82,12 @@ if (!opt.f || !opt.t) {
 }
 def from = opt.f
 def to = opt.t
-for (arg in opt.arguments()) {
+opt.arguments().each { arg ->
     if (arg ==~ '^/.*/$') {
-        def regexp = arg.substring(1, arg.length() - 1)
-        new File('.').eachFileRecurse {
-            if (it.name =~ regexp)
-                convertCharset(from, to, it.getCanonicalPath())
+        def regexp = arg[1..<-1]
+        new File('.').eachFileRecurse { file ->
+            if (file.name =~ regexp)
+                convertCharset(from, to, file.getCanonicalPath())
         }
     } else {
         convertCharset(from, to, arg)
