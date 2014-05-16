@@ -48,11 +48,5 @@ if (opt.arguments().size() < 1) {
     cli.usage()
     System.exit(1)
 }
-def params
-if (opt.p)
-    params = opt.p
-else if (opt.f)
-    params = new File(opt.f).text
-else
-    params = ''
+def params = opt.p ?: opt.f ? new File(opt.f).text : ''
 postRequest(opt.arguments()[0], params)
