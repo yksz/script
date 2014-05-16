@@ -26,12 +26,10 @@ def postRequest(url, params) {
 }
 
 def getCharset(contentType, defaultValue='utf-8') {
-    for (s in contentType?.split(';')) {
-        s = s.trim()
+    for (s in contentType?.tokenize(' ;')) {
         if (s.startsWith('charset='))
             return s.substring('charset='.length())
     }
-    return defaultValue
 }
 
 
