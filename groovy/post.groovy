@@ -3,7 +3,7 @@
 
 def postRequest(url, params) {
     def conn = new URL(url).openConnection()
-    conn.setRequestMethod("POST")
+    conn.setRequestMethod('POST')
     conn.setDoOutput(true)
     conn.setUseCaches(false);
     conn.setInstanceFollowRedirects(false)
@@ -30,6 +30,7 @@ def getCharset(contentType, defaultValue='utf-8') {
         if (s.startsWith('charset='))
             return s.substring('charset='.length())
     }
+    return defaultValue
 }
 
 
