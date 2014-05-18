@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
-// HTTP GET request
+// HTTP GET client
 
-def getRequest(url) {
+def get(url) {
     def conn = new URL(url).openConnection()
     conn.setRequestMethod('GET')
     conn.setInstanceFollowRedirects(false);
@@ -33,4 +33,4 @@ if (args.length < 1) {
     println 'usage: get.groovy <url>'
     System.exit(1)
 }
-getRequest(args[0])
+get(args[0])

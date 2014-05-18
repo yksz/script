@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
-// HTTP POST request
+// HTTP POST client
 
-def postRequest(url, params) {
+def post(url, params) {
     def conn = new URL(url).openConnection()
     conn.setRequestMethod('POST')
     conn.setDoOutput(true)
@@ -50,4 +50,4 @@ if (opt.arguments().size() < 1) {
     System.exit(1)
 }
 def params = opt.p ?: opt.f ? new File(opt.f).text : ''
-postRequest(opt.arguments()[0], params)
+post(opt.arguments()[0], params)
