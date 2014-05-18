@@ -1,49 +1,73 @@
 #!/usr/bin/env groovy
-// echo server for http
+// HTTP echo server
 
-class ConnThread extends Thread {
+abstract class Server {
+    def port = 8080
 
-    def cid
-    def socket
-    def input, output
-    def savemode = false
-
-    ConnThread(id, socket) {
-        this.cid = id
-        this.socket = socket
+    def run() {
+        def serverSocket = new ServerSocket(port)
+        println "this server is listening on port $port"
+        def id = 0
+        while (true) {
+            def socket = serverSocket.accept()
+            Thread.start {
+                processConnection(id++, socket)
+            }
+        }
     }
 
-    void run() {
-        println "connected: id=$cid, ip=${socket.getInetAddress()}"
-        input = new BufferedInputStream(socket.getInputStream())
-        output = new BufferedOutputStream(socket.getOutputStream())
-        while (true) {
-            if (!process())
-                break
-        }
+    def processConnection(id, socket) {
+        println "connected: id=$id, ip=${socket.getInetAddress()}"
+        def input = new BufferedInputStream(socket.getInputStream())
+        def output = new BufferedOutputStream(socket.getOutputStream())
+        while (serve(input, output)) {}
         input.close()
         output.close()
         socket.close()
-        println "disconnected: id=$cid"
+        println "disconnected: id=$id"
     }
 
-    def process() {
-        def method = readLine()
-        if (method?.startsWith('GET') || method?.startsWith('POST')) {
-            def headers = readHeader()
-            def keepAlive = getKeepAlive(headers)
-            def len = getContentLength(headers)
-            def body = readBody(len)
-            def bytes = makeResponse(method, headers, body)
-            writeResponse(bytes)
-            if (savemode)
-                saveRequest(bytes)
+    def serve(input, output) {}
+}
+
+class HttpServer extends Server {
+    class Request {
+        def line
+        def header
+        def input
+    }
+
+    class Response {
+        def output
+    }
+
+    class DefaultHandler {
+        def handle(request, response) {
+            def buf = new StringBuilder()
+            buf.append 'HTTP/1.1 200 OK\n'
+            buf.append "Content-Length: 0\n"
+            buf.append '\n'
+            response.output.write buf.toString().getBytes()
+            response.output.flush()
+        }
+    }
+
+    def handler = new DefaultHandler()
+
+    def serve(input, output) {
+        def line = readLine(input)
+        if (line?.startsWith('GET') || line?.startsWith('POST')) {
+            def header = parseHeader(input)
+            def keepAlive = getKeepAlive(header)
+            def request = new Request(line: line, header: header, input: input)
+            def response = new Response(output: output)
+            handler.handle(request, response)
             return keepAlive
         }
         return false
     }
 
-    def readLine() {
+    def readLine(input) {
         def buf = new StringBuilder()
         while (true) {
             int c = input.read()
@@ -56,38 +80,43 @@ class ConnThread extends Thread {
         }
     }
 
-    def readHeader() {
-        def headers = [:]
+    def parseHeader(input) {
+        def header = [:]
         while (input.available() > 0) {
-            def line = readLine()
-            if (line == null || line.trim().isEmpty())
+            def line = readLine(input)
+            if (line == null || line.isEmpty())
                 break
-            def s = line.split(':')
-            headers[s[0]] = (s.length > 1) ? s[1].trim() : null
+            def s = line.tokenize(' :')
+            header[s[0]] = s[1]
         }
-        return headers
+        return header
     }
 
-    def getKeepAlive(headers) {
-        def v = headers['Connection']
+    def getKeepAlive(header) {
+        def v = header['Connection']
         return !v.equalsIgnoreCase('close')
     }
+}
 
-    def getContentLength(headers) {
-        def v = headers['Content-Length']
-        return v != null ? v as int : 0
+class EchoHandler {
+    def requestID = 0
+    def savemode = false
+
+    def handle(request, response) {
+        def content = restoreRequest(request)
+        writeResponse(response.output, content)
+        if (savemode)
+            saveRequest(content)
+        requestID++
     }
 
-    def readBody(len) {
-        def body = new byte[len];
-        input.read body
-        return body
-    }
-
-    def makeResponse(method, headers, body) {
+    def restoreRequest(request) {
+        def len = getContentLength(request.header)
+        def body = readRequestBody(request.input, len)
         def buf = new ByteArrayOutputStream()
-        buf.write method.getBytes()
-        headers.each {
+        buf.write request.line.getBytes()
+        buf.write '\n'.getBytes()
+        request.header.each {
             buf.write "${it.key}: ${it.value}\n".getBytes()
         }
         buf.write '\n'.getBytes()
@@ -96,51 +125,49 @@ class ConnThread extends Thread {
         return buf.toByteArray()
     }
 
-    def writeResponse(bytes) {
-        writeHeader(bytes.length)
-        writeBody(bytes)
+    def getContentLength(header) {
+        def v = header['Content-Length']
+        return v != null ? v as int : 0
     }
 
-    def writeHeader(len) {
+    def readRequestBody(input, len) {
+        def body = new byte[len];
+        input.read body
+        return body
+    }
+
+    def writeResponse(output, content) {
+        writeHeader(output, content.length)
+        writeBody(output, content)
+    }
+
+    def writeHeader(output, len) {
         def buf = new StringBuilder()
         buf.append 'HTTP/1.1 200 OK\n'
-        buf.append 'Content-Type: text/plain; charset=utf-8\n'
         buf.append "Content-Length: $len\n"
         buf.append 'Connection: close\n'
+        buf.append 'Content-Type: text/plain; charset=utf-8\n'
         buf.append '\n'
         output.write buf.toString().getBytes()
         output.flush()
     }
 
-    def writeBody(bytes) {
-        output.write bytes
+    def writeBody(output, content) {
+        output.write content
         output.flush()
     }
 
-    def saveRequest(contents) {
-        def filename = "request-${cid}.txt"
-        println "save a request: id=$cid, file=$filename"
+    def saveRequest(content) {
+        def filename = "request-${requestID}.txt"
+        println "save a request: file=$filename"
         new File(filename).withOutputStream {
-            it.write contents
+            it.write content
         }
     }
-
-}
-
-def runServer(port, savemode) {
-    def server = new ServerSocket(port)
-    println "the echo server started: port=$port"
-    def id = 0L
-    while (true) {
-        def socket = server.accept()
-        connThread = new ConnThread(id++, socket)
-        connThread.savemode = savemode
-        connThread.start()
-    }
 }
 
 
-def cli = new CliBuilder(usage: 'echo.groovy [-options]')
+def cli = new CliBuilder(usage: 'echo.groovy [options]')
 cli.with {
     p args:1, 'port'
     s 'save a request into a file'
@@ -151,8 +178,7 @@ if (opt.h) {
     cli.usage()
     System.exit(0)
 }
-def port = 8080
-if (opt.p) {
-    port = opt.p as int
-}
-runServer(port, opt.s)
+def port = (opt.p ?: 8080) as int
+def server = new HttpServer(port: port)
+server.handler = new EchoHandler(savemode: opt.s)
+server.run()
