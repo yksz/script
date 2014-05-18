@@ -1,5 +1,5 @@
 #!/bin/sh
-# newline converter
+# Newline converter
 
 if [ $# -lt 3 ]; then
     echo 'usage: nconv.sh from to file'
