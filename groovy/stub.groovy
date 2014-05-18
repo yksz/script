@@ -1,5 +1,7 @@
 #!/usr/bin/env groovy
-// HTTP stub server
+/**
+ * HTTP stub server
+ */
 
 abstract class Server {
     def port = 8080
@@ -44,9 +46,9 @@ class HttpServer extends Server {
     class DefaultHandler {
         def handle(request, response) {
             def buf = new StringBuilder()
-            buf.append 'HTTP/1.1 200 OK\n'
+            buf.append "HTTP/1.1 200 OK\n"
             buf.append "Content-Length: 0\n"
-            buf.append '\n'
+            buf.append "\n"
             response.output.write buf.toString().getBytes()
             response.output.flush()
         }
@@ -56,7 +58,7 @@ class HttpServer extends Server {
 
     def serve(input, output) {
         def line = readLine(input)
-        if (line?.startsWith('GET') || line?.startsWith('POST')) {
+        if (line?.startsWith("GET") || line?.startsWith("POST")) {
             def header = parseHeader(input)
             def keepAlive = getKeepAlive(header)
             def request = new Request(line: line, header: header, input: input)
@@ -73,7 +75,7 @@ class HttpServer extends Server {
             int c = input.read()
             if (c == -1)
                 return buf.length() > 0 ? buf.toString() : null
-            else if ((c == '\r' && input.read() == '\n') || c == '\n')
+            else if ((c == "\r" && input.read() == "\n") || c == "\n")
                 return buf.toString()
             else
                 buf.append((char) c)
@@ -86,15 +88,15 @@ class HttpServer extends Server {
             def line = readLine(input)
             if (line == null || line.isEmpty())
                 break
-            def s = line.tokenize(' :')
+            def s = line.tokenize(" :")
             header[s[0]] = s[1]
         }
         return header
     }
 
     def getKeepAlive(header) {
-        def v = header['Connection']
-        return !v.equalsIgnoreCase('close')
+        def v = header["Connection"]
+        return !v.equalsIgnoreCase("close")
     }
 }
 
@@ -105,10 +107,10 @@ class StubHandler {
         "json" : "application/json",
     ]
 
-    def filename
+    def filename = ""
 
     def handle(request, response) {
-        def extension = filename.substring(filename.lastIndexOf('.') + 1)
+        def extension = filename.substring(filename.lastIndexOf(".") + 1)
         def mimeType = mimeTypes.get(extension, "text/plain")
         def content = new File(filename).getText().getBytes()
         writeResponse(response.output, mimeType, content)
@@ -121,11 +123,11 @@ class StubHandler {
 
     def writeHeader(output, len, mimeType) {
         def buf = new StringBuilder()
-        buf.append 'HTTP/1.1 200 OK\n'
+        buf.append "HTTP/1.1 200 OK\n"
         buf.append "Content-Length: $len\n"
-        buf.append 'Connection: close\n'
+        buf.append "Connection: close\n"
         buf.append "Content-Type: $mimeType; charset=utf-8\n"
-        buf.append '\n'
+        buf.append "\n"
         output.write buf.toString().getBytes()
         output.flush()
     }

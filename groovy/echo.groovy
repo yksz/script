@@ -1,5 +1,7 @@
 #!/usr/bin/env groovy
-// HTTP echo server
+/**
+ * HTTP echo server
+ */
 
 abstract class Server {
     def port = 8080
@@ -44,9 +46,9 @@ class HttpServer extends Server {
     class DefaultHandler {
         def handle(request, response) {
             def buf = new StringBuilder()
-            buf.append 'HTTP/1.1 200 OK\n'
+            buf.append "HTTP/1.1 200 OK\n"
             buf.append "Content-Length: 0\n"
-            buf.append '\n'
+            buf.append "\n"
             response.output.write buf.toString().getBytes()
             response.output.flush()
         }
@@ -56,7 +58,7 @@ class HttpServer extends Server {
 
     def serve(input, output) {
         def line = readLine(input)
-        if (line?.startsWith('GET') || line?.startsWith('POST')) {
+        if (line?.startsWith("GET") || line?.startsWith("POST")) {
             def header = parseHeader(input)
             def keepAlive = getKeepAlive(header)
             def request = new Request(line: line, header: header, input: input)
@@ -73,7 +75,7 @@ class HttpServer extends Server {
             int c = input.read()
             if (c == -1)
                 return buf.length() > 0 ? buf.toString() : null
-            else if ((c == '\r' && input.read() == '\n') || c == '\n')
+            else if ((c == "\r" && input.read() == "\n") || c == "\n")
                 return buf.toString()
             else
                 buf.append((char) c)
@@ -86,15 +88,15 @@ class HttpServer extends Server {
             def line = readLine(input)
             if (line == null || line.isEmpty())
                 break
-            def s = line.tokenize(' :')
+            def s = line.tokenize(" :")
             header[s[0]] = s[1]
         }
         return header
     }
 
     def getKeepAlive(header) {
-        def v = header['Connection']
-        return !v.equalsIgnoreCase('close')
+        def v = header["Connection"]
+        return !v.equalsIgnoreCase("close")
     }
 }
 
@@ -114,24 +116,23 @@ class EchoHandler {
         def len = getContentLength(request.header)
         def body = readRequestBody(request.input, len)
         def buf = new ByteArrayOutputStream()
-        buf.write request.line.getBytes()
-        buf.write '\n'.getBytes()
+        buf.write "${request.line}\n".getBytes()
         request.header.each {
             buf.write "${it.key}: ${it.value}\n".getBytes()
         }
-        buf.write '\n'.getBytes()
+        buf.write "\n".getBytes()
         buf.write body
         buf.flush()
         return buf.toByteArray()
     }
 
     def getContentLength(header) {
-        def v = header['Content-Length']
+        def v = header["Content-Length"]
         return v != null ? v as int : 0
     }
 
     def readRequestBody(input, len) {
-        def body = new byte[len];
+        def body = new byte[len]
         input.read body
         return body
     }
@@ -143,11 +144,11 @@ class EchoHandler {
 
     def writeHeader(output, len) {
         def buf = new StringBuilder()
-        buf.append 'HTTP/1.1 200 OK\n'
+        buf.append "HTTP/1.1 200 OK\n"
         buf.append "Content-Length: $len\n"
-        buf.append 'Connection: close\n'
-        buf.append 'Content-Type: text/plain; charset=utf-8\n'
-        buf.append '\n'
+        buf.append "Connection: close\n"
+        buf.append "Content-Type: text/plain; charset=utf-8\n"
+        buf.append "\n"
         output.write buf.toString().getBytes()
         output.flush()
     }
