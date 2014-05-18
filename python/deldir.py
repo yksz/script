@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # python3
-# delete directories
+"""
+ Delete directories
+"""
 
 import os
 import stat
