@@ -123,7 +123,7 @@ class StubHandler {
     def handle(request, response) {
         def extension = filename.substring(filename.lastIndexOf(".") + 1)
         def mimeType = mimeTypes.get(extension, "text/plain")
-        def content = new File(filename).getText().getBytes()
+        def content = filename.isEmpty() ? new byte[0] : new File(filename).getText().getBytes()
         writeResponse(response.output, mimeType, content)
     }
 
@@ -149,7 +149,7 @@ class StubHandler {
 }
 
 
-def cli = new CliBuilder(usage: 'stub.groovy [options] <response-file>')
+def cli = new CliBuilder(usage: 'stub.groovy [options] [response-file]')
 cli.with {
     p args:1, 'port'
     h longOpt:'help', 'print this message'
@@ -159,11 +159,8 @@ if (opt.h) {
     cli.usage()
     System.exit(0)
 }
-if (opt.arguments().size() < 1) {
-    cli.usage()
-    System.exit(1)
-}
 def port = (opt.p ?: 8080) as int
+def filename = opt.arguments()[0] ?: ""
 def server = new HttpServer(port: port)
-server.handler = new StubHandler(filename: opt.arguments()[0])
+server.handler = new StubHandler(filename: filename)
 server.run()
