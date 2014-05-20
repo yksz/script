@@ -22,7 +22,11 @@ abstract class Server {
         println "connected: id=$id, ip=${socket.getInetAddress()}"
         def input = new BufferedInputStream(socket.getInputStream())
         def output = new BufferedOutputStream(socket.getOutputStream())
-        while (serve(input, output)) {}
+        try {
+            while (serve(input, output)) {}
+        } catch (IOException e) {
+            println e
+        }
         input.close()
         output.close()
         socket.close()
@@ -59,8 +63,9 @@ class HttpServer extends Server {
     def serve(input, output) {
         def line = readLine(input)
         if (line?.startsWith("GET") || line?.startsWith("POST")) {
+            def protocol = line.tokenize()[2]
             def header = parseHeader(input)
-            def keepAlive = getKeepAlive(header)
+            def keepAlive = getKeepAlive(protocol, header)
             def request = new Request(line: line, header: header, input: input)
             def response = new Response(output: output)
             handler.handle(request, response)
@@ -94,9 +99,15 @@ class HttpServer extends Server {
         return header
     }
 
-    def getKeepAlive(header) {
+    def getKeepAlive(protocol, header) {
         def v = header["Connection"]
-        return !v.equalsIgnoreCase("close")
+        if (protocol == "HTTP/1.0") {
+            return v ? v.equalsIgnoreCase("keep-alive") : false
+        } else if (protocol == "HTTP/1.1") {
+            return v ? !v.equalsIgnoreCase("close") : true
+        } else {
+            return false
+        }
     }
 }
 
@@ -128,7 +139,7 @@ class EchoHandler {
 
     def getContentLength(header) {
         def v = header["Content-Length"]
-        return v != null ? v as int : 0
+        return (v ?: 0) as int
     }
 
     def readRequestBody(input, len) {
@@ -146,7 +157,6 @@ class EchoHandler {
         def buf = new StringBuilder()
         buf.append "HTTP/1.1 200 OK\n"
         buf.append "Content-Length: $len\n"
-        buf.append "Connection: close\n"
         buf.append "Content-Type: text/plain; charset=utf-8\n"
         buf.append "\n"
         output.write buf.toString().getBytes()
