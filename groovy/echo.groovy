@@ -112,7 +112,7 @@ class HttpServer extends Server {
 }
 
 class EchoHandler {
-    def requestID = 0
+    static def requestID = 0
     def savemode = false
 
     def handle(request, response) {
