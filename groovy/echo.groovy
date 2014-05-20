@@ -23,7 +23,7 @@ abstract class Server {
         def input = new BufferedInputStream(socket.getInputStream())
         def output = new BufferedOutputStream(socket.getOutputStream())
         try {
-            while (serve(input, output)) {}
+            while (serve(id, input, output)) {}
         } catch (IOException e) {
             println "id=$id: $e"
         }
@@ -60,7 +60,7 @@ class HttpServer extends Server {
 
     def handler = new DefaultHandler()
 
-    def serve(input, output) {
+    def serve(id, input, output) {
         def line = readLine(input)
         if (line?.startsWith("GET") || line?.startsWith("POST")) {
             def protocol = line.tokenize()[2]
@@ -68,7 +68,7 @@ class HttpServer extends Server {
             def keepAlive = getKeepAlive(protocol, header)
             def request = new Request(line: line, header: header, input: input)
             def response = new Response(output: output)
-            handler.handle(request, response)
+            handler.handle(id, request, response)
             return keepAlive
         }
         return false
@@ -112,15 +112,15 @@ class HttpServer extends Server {
 }
 
 class EchoHandler {
-    static def requestID = 0
+    def id = 0
     def savemode = false
 
-    def handle(request, response) {
+    def handle(id, request, response) {
+        this.id = id
         def content = restoreRequest(request)
         writeResponse(response.output, content)
         if (savemode)
             saveRequest(content)
-        requestID++
     }
 
     def restoreRequest(request) {
@@ -169,8 +169,8 @@ class EchoHandler {
     }
 
     def saveRequest(content) {
-        def filename = "request-${requestID}.txt"
-        println "save a request: file=$filename"
+        def filename = "request${id}.txt"
+        println "id=$id: save a request into $filename"
         new File(filename).withOutputStream {
             it.write content
         }
