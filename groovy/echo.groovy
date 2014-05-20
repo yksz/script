@@ -19,18 +19,18 @@ abstract class Server {
     }
 
     def processConnection(id, socket) {
-        println "connected: id=$id, ip=${socket.getInetAddress()}"
+        println "id=$id: connected [ip=${socket.getInetAddress()}]"
         def input = new BufferedInputStream(socket.getInputStream())
         def output = new BufferedOutputStream(socket.getOutputStream())
         try {
             while (serve(input, output)) {}
         } catch (IOException e) {
-            println e
+            println "id=$id: $e"
         }
         input.close()
         output.close()
         socket.close()
-        println "disconnected: id=$id"
+        println "id=$id: disconnected"
     }
 
     def serve(input, output) {}
