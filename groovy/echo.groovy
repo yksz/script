@@ -169,7 +169,9 @@ class EchoHandler {
     }
 
     def saveRequest(content) {
-        def filename = "request${id}.txt"
+        def dir = new File("requests")
+        dir.mkdirs()
+        def filename = "${dir.name}/request${id}.txt"
         println "id=$id: save a request into $filename"
         new File(filename).withOutputStream {
             it.write content
