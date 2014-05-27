@@ -11,8 +11,7 @@ abstract class Server {
         println "this server is listening on port $port"
         def id = 0
         while (true) {
-            def socket = serverSocket.accept()
-            Thread.start {
+            serverSocket.accept { socket ->
                 processConnection(id++, socket)
             }
         }
@@ -29,7 +28,6 @@ abstract class Server {
         }
         input.close()
         output.close()
-        socket.close()
         println "id=$id: disconnected"
     }
 
