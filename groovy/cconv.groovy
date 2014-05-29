@@ -85,7 +85,7 @@ if (!opt.f || !opt.t) {
 def from = opt.f
 def to = opt.t
 opt.arguments().each { arg ->
-    if (arg ==~ "^/.*/$") {
+    if (arg ==~ "^/.*/\$") {
         def regexp = arg[1..<-1]
         new File(".").eachFileRecurse { file ->
             if (file.name =~ regexp)
