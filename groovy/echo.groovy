@@ -2,6 +2,7 @@
 /**
  * HTTP echo server
  */
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class Server {
     def port = 8080
@@ -9,10 +10,10 @@ abstract class Server {
     def run() {
         def serverSocket = new ServerSocket(port)
         println "this server is listening on port $port"
-        def id = 0
+        def id = new AtomicInteger(0)
         while (true) {
             serverSocket.accept { socket ->
-                processConnection(id++, socket)
+                processConnection(id.getAndIncrement(), socket)
             }
         }
     }
@@ -110,15 +111,13 @@ class HttpServer extends Server {
 }
 
 class EchoHandler {
-    def id = 0
-    def savemode = false
+    def saveDir
 
     def handle(id, request, response) {
-        this.id = id
         def content = restoreRequest(request)
         writeResponse(response.output, content)
-        if (savemode)
-            saveRequest(content)
+        if (saveDir)
+            saveRequest(id, content, saveDir)
     }
 
     def restoreRequest(request) {
@@ -166,14 +165,10 @@ class EchoHandler {
         output.flush()
     }
 
-    def saveRequest(content) {
-        def dir = new File("requests")
-        dir.mkdirs()
-        def filename = "${dir.name}/request${id}.txt"
+    static def saveRequest(id, content, saveDir) {
+        def filename = "${saveDir.name}/request${id}.txt"
         println "id=$id: save a request into $filename"
-        new File(filename).withOutputStream {
-            it.write content
-        }
+        new File(filename).append content
     }
 }
 
@@ -190,6 +185,12 @@ if (opt.h) {
     System.exit(0)
 }
 def port = (opt.p ?: 8080) as int
+def saveDir
+if (opt.s) {
+    saveDir = new File('requests')
+    saveDir.deleteDir()
+    saveDir.mkdirs()
+}
 def server = new HttpServer(port: port)
-server.handler = new EchoHandler(savemode: opt.s)
+server.handler = new EchoHandler(saveDir: saveDir)
 server.run()

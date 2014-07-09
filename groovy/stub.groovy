@@ -2,6 +2,7 @@
 /**
  * HTTP stub server
  */
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class Server {
     def port = 8080
@@ -9,10 +10,10 @@ abstract class Server {
     def run() {
         def serverSocket = new ServerSocket(port)
         println "this server is listening on port $port"
-        def id = 0
+        def id = new AtomicInteger(0)
         while (true) {
             serverSocket.accept { socket ->
-                processConnection(id++, socket)
+                processConnection(id.getAndIncrement(), socket)
             }
         }
     }
