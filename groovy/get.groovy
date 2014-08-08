@@ -3,10 +3,10 @@
  * HTTP GET client
  */
 
-def get(url) {
+def get(url, redirects) {
     def conn = new URL(url).openConnection()
     conn.setRequestMethod("GET")
-    conn.setInstanceFollowRedirects(false)
+    conn.setInstanceFollowRedirects(redirects)
     conn.connect()
     println "[ HTTP Headers ]"
     conn.getHeaderFields().each { key, value ->
@@ -30,8 +30,18 @@ def getCharset(contentType, defaultValue="utf-8") {
 }
 
 
-if (args.length < 1) {
-    println 'usage: get.groovy <url>'
+def cli = new CliBuilder(usage: 'get.groovy [options] <url>')
+cli.with {
+    r 'auto redirect'
+    h longOpt:'help', 'print this message'
+}
+def opt = cli.parse(args)
+if (opt.h) {
+    cli.usage()
+    System.exit(0)
+}
+if (opt.arguments().size() < 1) {
+    cli.usage()
     System.exit(1)
 }
-get(args[0])
+get(opt.arguments()[0], opt.r)
