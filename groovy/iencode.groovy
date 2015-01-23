@@ -1,5 +1,7 @@
 #!/usr/bin/env groovy
 /**
+ * Image Encoder
+ *
  * Encode image to Base64 string
  */
 
@@ -22,7 +24,7 @@ def getExtension(filepath) {
 
 
 if (args.length < 1) {
-    println 'usage: iencode.groovy <filepath>'
+    println 'usage: ./iencode.groovy <image file>'
     System.exit(1)
 }
 def filepath = args[0]
