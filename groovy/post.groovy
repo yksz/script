@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 /**
- * HTTP POST client
+ * HTTP POST Client
  */
 
 def post(url, params) {
@@ -38,7 +38,7 @@ def getCharset(contentType, defaultValue="utf-8") {
 def cli = new CliBuilder(usage: 'post.groovy [options] <url>')
 cli.with {
     p args:1, argName:'params', 'post parameters'
-    f args:1, argName:'filename', 'a file on post parameters'
+    f args:1, argName:'file', 'a file written about post parameters'
     h longOpt:'help', 'print this message'
 }
 def opt = cli.parse(args)
