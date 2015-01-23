@@ -1,7 +1,8 @@
 #!/usr/bin/env groovy
 /**
- * HTTP stub server
+ * HTTP Stub Server
  */
+
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class Server {
@@ -117,12 +118,12 @@ class StubHandler {
         "json" : "application/json",
     ]
 
-    def filename = ""
+    def filepath = ""
 
     def handle(request, response) {
-        def extension = filename.substring(filename.lastIndexOf(".") + 1)
+        def extension = filepath.substring(filepath.lastIndexOf(".") + 1)
         def mimeType = mimeTypes.get(extension, "text/plain")
-        def content = filename.isEmpty() ? new byte[0] : new File(filename).getText().getBytes()
+        def content = filepath.isEmpty() ? new byte[0] : new File(filepath).getText().getBytes()
         writeResponse(response.output, mimeType, content)
     }
 
@@ -148,7 +149,7 @@ class StubHandler {
 }
 
 
-def cli = new CliBuilder(usage: 'stub.groovy [options] [response-file]')
+def cli = new CliBuilder(usage: './stub.groovy [options] [response file]')
 cli.with {
     p args:1, 'port'
     h longOpt:'help', 'print this message'
@@ -159,7 +160,7 @@ if (opt.h) {
     System.exit(0)
 }
 def port = (opt.p ?: 8080) as int
-def filename = opt.arguments()[0] ?: ""
+def filepath = opt.arguments()[0] ?: ""
 def server = new HttpServer(port: port)
-server.handler = new StubHandler(filename: filename)
+server.handler = new StubHandler(filepath: filepath)
 server.run()
