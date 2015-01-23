@@ -1,7 +1,8 @@
 #!/usr/bin/env groovy
 /**
- * HTTP echo server
+ * HTTP Echo Server
  */
+
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class Server {
@@ -166,14 +167,14 @@ class EchoHandler {
     }
 
     static def saveRequest(id, content, saveDir) {
-        def filename = "${saveDir.name}/request${id}.txt"
-        println "id=$id: save a request into $filename"
-        new File(filename).append content
+        def filepath = "${saveDir.name}/request${id}.txt"
+        println "id=$id: save a request into $filepath"
+        new File(filepath).append content
     }
 }
 
 
-def cli = new CliBuilder(usage: 'echo.groovy [options]')
+def cli = new CliBuilder(usage: './echo.groovy [options]')
 cli.with {
     p args:1, 'port'
     s 'save a request into a file'
