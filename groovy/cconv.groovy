@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 /**
- * Charset converter
+ * Charset Converter
  */
 
 import java.nio.charset.Charset
@@ -60,7 +60,7 @@ def printAvailableCharsets() {
 }
 
 
-def cli = new CliBuilder(usage: 'cconv.groovy [options] <filepath> | <regexp>\n'
+def cli = new CliBuilder(usage: './cconv.groovy [options] <file> | <regexp>\n'
                               + 'e.g. cconv.groovy -f euc-jp -t utf-8 "/.*\\.txt/"')
 cli.with {
     f args:1, argName:'charset', 'from encording'
