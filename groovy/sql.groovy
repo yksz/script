@@ -3,6 +3,7 @@
  * SQL Scripts Runner
  */
 
+@GrabConfig(systemClassLoader=true)
 @Grapes([
     @Grab(group='com.h2database', module='h2', version='1.4.185'),
     @Grab(group='org.apache.derby', module='derby', version='10.11.1.1')
@@ -23,17 +24,19 @@ def newSql(dbPropPath) {
 }
 
 def runSqlScript(sql, scriptPath) {
+    executeSql(sql, parseSqlScript(scriptPath))
+}
+
+def parseSqlScript(scriptPath) {
     def script = new File(scriptPath).text
     script = script.replaceAll(/--.*/, '') // remove comment
     script = removeBlankLine(script)
+    def statements = []
     script.split(/;\s*/).each {
-        if (!it.matches(/\s+/)) {
-            println '# execute sql:'
-            println it
-            sql.execute(it)
-            println ''
-        }
+        if (!it.matches(/\s+/))
+            statements << it
     }
+    return statements
 }
 
 def removeBlankLine(text) {
@@ -43,6 +46,16 @@ def removeBlankLine(text) {
             sb.append("$it\n")
     }
     return sb.toString()
+}
+
+def executeSql(sql, statements) {
+    println '# execute sql with batch:'
+    sql.withBatch(statements.size()) { stmt ->
+        statements.each {
+            println "$it\n"
+            stmt.addBatch(it)
+        }
+    }
 }
 
 
