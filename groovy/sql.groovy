@@ -20,6 +20,7 @@ def newSql(dbPropPath) {
         db.user = 'sa'
         db.password = ''
     }
+    println "connect to ${db.url}"
     return Sql.newInstance(db.url, db.user, db.password, db.driver)
 }
 
