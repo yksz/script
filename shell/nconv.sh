@@ -4,7 +4,7 @@
 #
 
 if [ $# -lt 3 ]; then
-    echo 'usage: ./nconv.sh from to file'
+    echo 'usage: ./nconv.sh <from> <to> <file>'
     echo '  e.g. ./nconv.sh CRLF LF "*.txt"'
     exit 1
 fi
