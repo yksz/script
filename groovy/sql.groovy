@@ -10,6 +10,7 @@
     @Grab(group='org.apache.derby', module='derbyclient', version='10.11.1.1')
 ])
 import groovy.sql.Sql
+import groovy.text.SimpleTemplateEngine
 
 def newSql(db) {
     println "# connect to ${db.url}"
@@ -42,23 +43,46 @@ def removeBlankLine(text) {
 }
 
 def executeSql(sql, statements, cnt) {
-    for (i in 0..<cnt) {
-        if (i == 1) println "# ...and repeat ${cnt - 1} times"
-        statements.each { stmt ->
-            if (i == 0) println "# execute sql: $stmt"
-            if (stmt.trim().toLowerCase().startsWith('select ')) {
-                sql.eachRow(stmt) { row ->
-                    println row
+    def templates = convertTemplates(statements, '#', '$')
+    for (i in 1..cnt) {
+        def binding = [i:i]
+        templates.each { t ->
+            def stmt = t.make(binding).toString()
+            println "# execute sql: $stmt"
+            withClock('#') {
+                if (stmt.trim().toLowerCase().startsWith('select ')) {
+                    sql.eachRow(stmt) { row ->
+                        println row
+                    }
+                } else {
+                    sql.execute(stmt)
                 }
-            } else {
-                sql.execute(stmt)
             }
         }
     }
 }
 
+def convertTemplates(strs, oldChar, newChar) {
+    def engine = new SimpleTemplateEngine()
+    def templates = []
+    strs.each {
+        def reader = new StringReader(it.replace(oldChar, newChar))
+        templates << engine.createTemplate(reader)
+    }
+    return templates
+}
 
-def cli = new CliBuilder(usage: './sql.groovy [options] <files> | <sql statements>')
+def withClock(message, closure) {
+    def start = System.currentTimeMillis()
+    closure()
+    def stop = System.currentTimeMillis()
+    println "${message} ${stop - start} [ms]"
+}
+
+
+def cli = new CliBuilder(usage: './sql.groovy [options] <files> | <sql statements>\n'
+        + 'e.g. ./sql.groovy -c 10 -s\n'
+        + '"SELECT * FROM foo WHERE bar = \'bar#i\'"')
 cli.with {
     _ longOpt:'prop', args:1, argName:'file', 'jdbc properties file'
     _ longOpt:'driver', args:1, 'jdbc driver'
@@ -80,16 +104,15 @@ if (opt.arguments().size() < 1) {
 }
 def cnt = (opt.c ?: 1) as int
 def sql = newSql(loadDbConfig(opt))
-def start = System.currentTimeMillis()
-if (opt.s) {
-    executeSql(sql, opt.arguments(), cnt)
-} else {
-    opt.arguments().each { arg ->
-        runSqlScript(sql, arg, cnt)
+withClock('# total:') {
+    if (opt.s) {
+        executeSql(sql, opt.arguments(), cnt)
+    } else {
+        opt.arguments().each { arg ->
+            runSqlScript(sql, arg, cnt)
+        }
     }
 }
-def stop = System.currentTimeMillis()
-println "# ${(stop - start) / 1000} [sec]"
 
 def loadDbConfig(opt) {
     def db = new Properties()
