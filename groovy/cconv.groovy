@@ -61,7 +61,7 @@ def printAvailableCharsets() {
 
 
 def cli = new CliBuilder(usage: './cconv.groovy [options] <file> | <regexp>\n'
-                              + 'e.g. cconv.groovy -f euc-jp -t utf-8 "/.*\\.txt/"')
+        + 'e.g. ./cconv.groovy -f euc-jp -t utf-8 "/.*\\.txt/"')
 cli.with {
     f args:1, argName:'charset', 'from encording'
     t args:1, argName:'charset', 'to encording'
