@@ -18,7 +18,7 @@ def newSql(db) {
 }
 
 def runSqlScript(sql, scriptPath, cnt) {
-    executeSql(sql, parseSqlScript(scriptPath), cnt)
+    executeSqlStatements(sql, parseSqlScript(scriptPath), cnt)
 }
 
 def parseSqlScript(scriptPath) {
@@ -42,21 +42,31 @@ def removeBlankLine(text) {
     return sb.toString()
 }
 
-def executeSql(sql, statements, cnt) {
+def executeSqlStatements(sql, statements, cnt) {
     def templates = convertTemplates(statements, '#', '$')
     for (i in 1..cnt) {
-        def binding = [i:i]
-        templates.each { t ->
-            def stmt = t.make(binding).toString()
-            println "# execute sql: $stmt"
-            withClock('#') {
-                if (stmt.trim().toLowerCase().startsWith('select ')) {
-                    sql.eachRow(stmt) { row ->
-                        println row
-                    }
-                } else {
-                    sql.execute(stmt)
+        withClock('# transaction:') {
+            println "# begin transaction"
+            sql.withTransaction {
+                executeSqlTemplates(sql, templates, i)
+            }
+            println "# end transaction"
+        }
+    }
+}
+
+def executeSqlTemplates(sql, templates, i) {
+    def binding = [i:i]
+    templates.each { tmplt ->
+        def stmt = tmplt.make(binding).toString()
+        println "# execute sql: $stmt"
+        withClock('#') {
+            if (stmt.trim().toLowerCase().startsWith('select ')) {
+                sql.eachRow(stmt) { row ->
+                    println row
                 }
+            } else {
+                sql.execute(stmt)
             }
         }
     }
@@ -106,7 +116,7 @@ def cnt = (opt.c ?: 1) as int
 def sql = newSql(loadDbConfig(opt))
 withClock('# total:') {
     if (opt.s) {
-        executeSql(sql, opt.arguments(), cnt)
+        executeSqlStatements(sql, opt.arguments(), cnt)
     } else {
         opt.arguments().each { arg ->
             runSqlScript(sql, arg, cnt)
