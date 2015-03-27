@@ -5,15 +5,19 @@ if [ $# -lt 1 ] ; then
     exit 1
 fi
 
-path=$1
-root=(`ls`)
+INSTALL_PATH=$1
+BASE_DIR=$(cd $(dirname $0); pwd)
 
-echo install to $path
-for file in ${root[@]} ; do
-    if [ -d $file ] ; then
-        scripts=(`ls $file`)
-        for script in ${scripts[@]} ; do
-            ln -s $script $path
+echo install to $INSTALL_PATH
+fileNames=(`ls $BASE_DIR`)
+for fileName in ${fileNames[@]} ; do
+    filePath="$BASE_DIR/$fileName"
+    if [ -d $filePath ] ; then
+        dirPath=$filePath
+        scriptNames=(`ls $dirPath`)
+        for scriptName in ${scriptNames[@]} ; do
+            target="$dirPath/$scriptName"
+            ln -s $target $INSTALL_PATH
         done
     fi
 done
