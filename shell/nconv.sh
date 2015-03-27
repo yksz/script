@@ -3,7 +3,7 @@
 # Newline Converter
 #
 
-if [ $# -lt 3 ]; then
+if [ $# -lt 3 ] ; then
     echo 'usage: ./nconv.sh <from> <to> <file>'
     echo '  e.g. ./nconv.sh CRLF LF "*.txt"'
     exit 1
@@ -23,7 +23,7 @@ case $2 in
     *)    echo "unknown newline: $2"
           exit 1 ;;
 esac
-for input in `find . -name "$3" -print`; do
+for input in `find . -name "$3" -print` ; do
     echo $input
     output="${input}.tmp"
     awk -F $f -v ORS=$t '{ print }' $input > $output
