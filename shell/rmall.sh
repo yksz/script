@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# Remove multiple files and directories
+#
+
+if [ $# -lt 1 ] ; then
+    echo "usage: $0 <file or directory name>"
+    echo "  e.g. $0 \".svn\""
+    exit 1
+fi
+
+find -name "$1" -print -exec rm -rf {} \; 2>/dev/null
