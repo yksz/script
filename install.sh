@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -lt 1 ] ; then
-    echo 'usage: ./install.sh <install path>'
+    echo "usage: $0 <install path>"
     exit 1
 fi
 
