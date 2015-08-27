@@ -90,7 +90,7 @@ def withClock(message, closure) {
 }
 
 
-def cli = new CliBuilder(usage: './sql.groovy [options] <files> | <sql statements>\n'
+def cli = new CliBuilder(usage: './sql.groovy [options] <sql files> | <sql statements>\n'
         + 'e.g. ./sql.groovy -c 10 -s\n'
         + '"SELECT * FROM foo WHERE bar = \'bar#i\'"')
 cli.with {
