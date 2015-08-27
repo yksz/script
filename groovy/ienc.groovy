@@ -24,7 +24,7 @@ def getExtension(filepath) {
 
 
 if (args.length < 1) {
-    println 'usage: ./iencode.groovy <image file>'
+    println 'usage: ./ienc.groovy <image file>'
     System.exit(1)
 }
 def filepath = args[0]

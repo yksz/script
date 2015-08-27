@@ -30,7 +30,7 @@ def getCharset(contentType, defaultValue="utf-8") {
 }
 
 
-def cli = new CliBuilder(usage: './get.groovy [options] <url>')
+def cli = new CliBuilder(usage: './getc.groovy [options] <url>')
 cli.with {
     r 'auto redirect'
     h longOpt:'help', 'print this message'

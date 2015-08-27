@@ -35,7 +35,7 @@ def getCharset(contentType, defaultValue="utf-8") {
 }
 
 
-def cli = new CliBuilder(usage: './post.groovy [options] <url>')
+def cli = new CliBuilder(usage: './postc.groovy [options] <url>')
 cli.with {
     p args:1, argName:'params', 'post parameters'
     f args:1, argName:'file', 'a file written about post parameters'

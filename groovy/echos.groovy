@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 /**
- * HTTP Stub Server
+ * HTTP Echo Server
  */
 
 import java.util.concurrent.atomic.AtomicInteger
@@ -24,7 +24,7 @@ abstract class Server {
         def input = new BufferedInputStream(socket.getInputStream())
         def output = new BufferedOutputStream(socket.getOutputStream())
         try {
-            while (serve(input, output)) {}
+            while (serve(id, input, output)) {}
         } catch (IOException e) {
             println "id=$id: $e"
         }
@@ -60,7 +60,7 @@ class HttpServer extends Server {
 
     def handler = new DefaultHandler()
 
-    def serve(input, output) {
+    def serve(id, input, output) {
         def line = readLine(input)
         if (line?.startsWith("GET") || line?.startsWith("POST")) {
             def protocol = line.tokenize()[2]
@@ -68,7 +68,7 @@ class HttpServer extends Server {
             def keepAlive = getKeepAlive(protocol, header)
             def request = new Request(line: line, header: header, input: input)
             def response = new Response(output: output)
-            handler.handle(request, response)
+            handler.handle(id, request, response)
             return keepAlive
         }
         return false
@@ -111,32 +111,51 @@ class HttpServer extends Server {
     }
 }
 
-class StubHandler {
-    static def mimeTypes = [
-        "html" : "text/html",
-        "xml"  : "application/xml",
-        "json" : "application/json",
-    ]
+class EchoHandler {
+    def saveDir
 
-    def filepath = ""
-
-    def handle(request, response) {
-        def extension = filepath.substring(filepath.lastIndexOf(".") + 1)
-        def mimeType = mimeTypes.get(extension, "text/plain")
-        def content = filepath.isEmpty() ? new byte[0] : new File(filepath).getText().getBytes()
-        writeResponse(response.output, mimeType, content)
+    def handle(id, request, response) {
+        def content = restoreRequest(request)
+        writeResponse(response.output, content)
+        if (saveDir)
+            saveRequest(id, content, saveDir)
     }
 
-    def writeResponse(output, mimeType, content) {
-        writeHeader(output, content.length, mimeType)
+    def restoreRequest(request) {
+        def len = getContentLength(request.header)
+        def body = readRequestBody(request.input, len)
+        def buf = new ByteArrayOutputStream()
+        buf.write "${request.line}\n".getBytes()
+        request.header.each {
+            buf.write "${it.key}: ${it.value}\n".getBytes()
+        }
+        buf.write "\n".getBytes()
+        buf.write body
+        buf.flush()
+        return buf.toByteArray()
+    }
+
+    def getContentLength(header) {
+        def v = header["Content-Length"]
+        return (v ?: 0) as int
+    }
+
+    def readRequestBody(input, len) {
+        def body = new byte[len]
+        input.read body
+        return body
+    }
+
+    def writeResponse(output, content) {
+        writeHeader(output, content.length)
         writeBody(output, content)
     }
 
-    def writeHeader(output, len, mimeType) {
+    def writeHeader(output, len) {
         def buf = new StringBuilder()
         buf.append "HTTP/1.1 200 OK\n"
         buf.append "Content-Length: $len\n"
-        buf.append "Content-Type: $mimeType; charset=utf-8\n"
+        buf.append "Content-Type: text/plain; charset=utf-8\n"
         buf.append "\n"
         output.write buf.toString().getBytes()
         output.flush()
@@ -146,12 +165,19 @@ class StubHandler {
         output.write content
         output.flush()
     }
+
+    static def saveRequest(id, content, saveDir) {
+        def filepath = "${saveDir.name}/request${id}.txt"
+        println "id=$id: save a request into $filepath"
+        new File(filepath).append content
+    }
 }
 
 
-def cli = new CliBuilder(usage: './stub.groovy [options] [response file]')
+def cli = new CliBuilder(usage: './echos.groovy [options]')
 cli.with {
     p args:1, 'port'
+    s 'save a request into a file'
     h longOpt:'help', 'print this message'
 }
 def opt = cli.parse(args)
@@ -160,7 +186,12 @@ if (opt.h) {
     System.exit(0)
 }
 def port = (opt.p ?: 8080) as int
-def filepath = opt.arguments()[0] ?: ""
+def saveDir
+if (opt.s) {
+    saveDir = new File('requests')
+    saveDir.deleteDir()
+    saveDir.mkdirs()
+}
 def server = new HttpServer(port: port)
-server.handler = new StubHandler(filepath: filepath)
+server.handler = new EchoHandler(saveDir: saveDir)
 server.run()
