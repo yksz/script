@@ -32,7 +32,7 @@ def eval(String line) {
 
 
 if (args.length < 2) {
-    println 'usage: ./udp.groovy <host> <port>'
+    println 'usage: ./udpc.groovy <host> <port>'
     System.exit(1)
 }
 def host = args[0]
