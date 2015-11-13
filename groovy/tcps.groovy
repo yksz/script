@@ -61,7 +61,7 @@ class TCPServer extends Server {
 }
 
 
-def cli = new CliBuilder(usage: './echos.groovy [options]')
+def cli = new CliBuilder(usage: './tcps.groovy [options]')
 cli.with {
     p args:1, 'port'
     h longOpt:'help', 'print this message'
