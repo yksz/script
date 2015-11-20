@@ -36,12 +36,12 @@ cli.with {
     h longOpt:'help', 'print this message'
 }
 def opt = cli.parse(args)
-if (opt.h) {
-    cli.usage()
-    System.exit(0)
-}
 if (opt.arguments().size() < 1) {
     cli.usage()
     System.exit(1)
+}
+if (opt.h) {
+    cli.usage()
+    System.exit(0)
 }
 get(opt.arguments()[0], opt.r)
