@@ -6,7 +6,7 @@
 import java.nio.ByteBuffer
 
 def sendText(String message) {
-    if (message.endsWith('\\n')) {
+    if (message.endsWith('\\n')) { // new line
         message = replaceLast(message, '\\n', '\n')
     }
     def data = message.getBytes()
@@ -27,11 +27,12 @@ def sendBinary(String message) {
     socket.outputStream.write(data);
 }
 
-def repl() {
-    def reader = System.in.newReader()
+def repl(BufferedReader reader) {
     while (true) {
         print "> "
         def line = reader.readLine()
+        if (line == null)
+            break
         try {
             eval(line)
         } catch (Throwable e) {
@@ -41,26 +42,31 @@ def repl() {
 }
 
 def eval(String line) {
-    if (line == null || line.trim().isEmpty())
+    if (line.trim().isEmpty() || line[0] == '#') // comment
         return
-    isBinaryMode ? sendBinary(line) : sendText(line)
+    binaryMode ? sendBinary(line) : sendText(line)
 }
 
 
 def cli = new CliBuilder(usage: './tcpc.groovy [options] <host> <port>')
 cli.with {
     b 'binary mode'
+    f args:1, argName:'file', 'a send message file'
     h longOpt:'help', 'print this message'
 }
 def opt = cli.parse(args)
+if (opt.arguments().size() < 2) {
+    cli.usage()
+    System.exit(1)
+}
 if (opt.h) {
     cli.usage()
     System.exit(0)
 }
-
-isBinaryMode = opt.b
+binaryMode = opt.b
+def reader = opt.f ? new File(opt.f).newReader() : System.in.newReader()
 def host = opt.arguments()[0]
 def port = opt.arguments()[1] as int
 socket = new Socket(host, port)
-repl()
+repl(reader)
 socket.close()
