@@ -3,8 +3,6 @@
  * TCP Client
  */
 
-import java.nio.ByteBuffer
-
 def sendText(String message) {
     if (message.endsWith('\\n')) { // new line
         message = replaceLast(message, '\\n', '\n')
