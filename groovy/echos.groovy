@@ -33,7 +33,7 @@ abstract class Server {
         println "id=$id: disconnected"
     }
 
-    def serve(input, output) {}
+    def serve(id, input, output) {}
 }
 
 class HttpServer extends Server {

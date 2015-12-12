@@ -24,7 +24,7 @@ abstract class Server {
         def input = new BufferedInputStream(socket.getInputStream())
         def output = new BufferedOutputStream(socket.getOutputStream())
         try {
-            while (serve(id, input, output)) {}
+            while (serve(input, output)) {}
         } catch (IOException e) {
             println "id=$id: $e"
         }
@@ -37,7 +37,7 @@ abstract class Server {
 }
 
 class TCPServer extends Server {
-    def serve(id, input, output) {
+    def serve(input, output) {
         def line = readLine(input)
         if (line == null) {
             return false
