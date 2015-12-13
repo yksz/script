@@ -5,19 +5,16 @@ if [ $# -lt 1 ] ; then
     exit 1
 fi
 
+TARGET_DIR=('shell')
 INSTALL_PATH=$1
-BASE_DIR=$(cd $(dirname $0); pwd)
-
 echo install to $INSTALL_PATH
-fileNames=(`ls $BASE_DIR`)
-for fileName in ${fileNames[@]} ; do
-    filePath="$BASE_DIR/$fileName"
-    if [ -d $filePath ] ; then
-        dirPath=$filePath
-        scriptNames=(`ls $dirPath`)
-        for scriptName in ${scriptNames[@]} ; do
-            target="$dirPath/$scriptName"
-            ln -s $target $INSTALL_PATH
-        done
-    fi
+
+baseDir=$(cd $(dirname $0); pwd)
+for dir in ${TARGET_DIR[@]} ; do
+    dirPath="$baseDir/$dir"
+    scriptNames=(`ls $dirPath`)
+    for scriptName in ${scriptNames[@]} ; do
+        target="$dirPath/$scriptName"
+        ln -s $target $INSTALL_PATH
+    done
 done
