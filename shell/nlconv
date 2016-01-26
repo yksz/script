@@ -13,14 +13,14 @@ case $1 in
     CRLF) f='\r\n' ;;
     CR)   f='\r' ;;
     LF)   f='\n' ;;
-    *)    echo "unknown newline: $1"
+    *)    echo "unknown newline: $1" >&2
           exit 1 ;;
 esac
 case $2 in
     CRLF) t='\r\n' ;;
     CR)   t='\r' ;;
     LF)   t='\n' ;;
-    *)    echo "unknown newline: $2"
+    *)    echo "unknown newline: $2" >&2
           exit 1 ;;
 esac
 for input in `find . -name "$3" -print` ; do

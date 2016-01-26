@@ -19,7 +19,7 @@ def repl() {
         try {
             eval(line)
         } catch (Throwable e) {
-            println e
+            System.err.println e
         }
     }
 }

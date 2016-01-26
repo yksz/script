@@ -26,7 +26,7 @@ abstract class Server {
         try {
             while (serve(input, output)) {}
         } catch (IOException e) {
-            println "id=$id: $e"
+            System.err.println "id=$id: $e"
         }
         input.close()
         output.close()

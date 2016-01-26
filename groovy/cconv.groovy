@@ -8,7 +8,7 @@ import java.nio.charset.Charset
 def convertCharset(from, to, srcPath) {
     def srcFile = new File(srcPath)
     if (!srcFile.exists()) {
-        println "no such file: $srcPath"
+        System.err.println "no such file: $srcPath"
         return
     }
     if (srcFile.isDirectory() || isBinaryFile(srcFile))
@@ -78,7 +78,7 @@ if (opt.l) {
     System.exit(0)
 }
 if (!opt.f || !opt.t) {
-    println 'error: Missing required options: f, t'
+    System.err.println 'error: missing required options: f, t'
     cli.usage()
     System.exit(1)
 }
