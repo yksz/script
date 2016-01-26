@@ -1,10 +1,9 @@
 #!/bin/sh
 #
-# Replace a string in multiple files
-#
+# Replace strings in multiple files recursively
 
 if [ $# -lt 3 ] ; then
-    echo "usage: $0 <old string> <new string> <file>"
+    echo "usage: $0 <old string> <new string> <file nmae>"
     echo "  e.g. $0 lang long \"*.txt\""
     exit 1
 fi

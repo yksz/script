@@ -1,7 +1,6 @@
 #!/bin/sh
 #
 # Remove multiple files and directories
-#
 
 if [ $# -lt 1 ] ; then
     echo "usage: $0 <file or directory name>"
