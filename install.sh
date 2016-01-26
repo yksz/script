@@ -6,15 +6,16 @@ if [ $# -lt 1 ] ; then
 fi
 
 TARGET_DIR=('shell')
-INSTALL_PATH=$1
-echo install to $INSTALL_PATH
 
-baseDir=$(cd $(dirname $0); pwd)
+install_path=$1
+echo install to $install_path
+
+script_dir=$(cd $(dirname $0); pwd)
 for dir in ${TARGET_DIR[@]} ; do
-    dirPath="$baseDir/$dir"
-    scriptNames=(`ls $dirPath`)
-    for scriptName in ${scriptNames[@]} ; do
-        target="$dirPath/$scriptName"
-        ln -s $target $INSTALL_PATH
+    dir_path="$script_dir/$dir"
+    script_names=(`ls $dir_path`)
+    for script_name in ${script_names[@]} ; do
+        target="$dir_path/$script_name"
+        ln -sf $target $install_path
     done
 done
