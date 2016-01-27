@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Execute 'git pull' on multiple git repositories
+
+if ! type git > /dev/null 2>&1 ; then
+    echo 'Git is not installed' >&2
+    exit 1
+fi
+
+if [ $# -lt 1 ] ; then
+    echo "usage: $0 <repositories>"
+    exit 1
+fi
+
+current_dir=`pwd`
+for repo in $@ ; do
+    if  [ -d "${repo}/.git" ] ; then
+        echo "${repo}/"
+        cd $repo
+        git pull
+        cd $current_dir
+    fi
+done
