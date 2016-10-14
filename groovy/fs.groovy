@@ -33,7 +33,7 @@ def processRequest() {
     if (path.indexOf("..") != -1) // simplistic security
         return
     path = URLDecoder.decode(path, "utf-8")
-    file = new File("." + path)
+    def file = new File("." + path)
     if (!file.exists()) {
         printHeaders("404 Not Found", "text/html")
         println "<html><head><h1>404 Not Found</h1></head></html>"
@@ -52,12 +52,10 @@ def processRequest() {
 
 def printDirectoryListing(dir) {
     printHeaders("200 OK", "text/html")
+    path = path[-1] != "/" ? path + "/" : path
     println "<html><head></head><body>"
     for (filename in dir.list().toList().sort()) {
-        if (path == "/")
-            path = ""
-        path = URLEncoder.encode(path, "utf-8")
-        println "<a href='${path}/${filename}'>${filename}</a><br>"
+        println "<a href=\"${path}${filename}\">${filename}</a><br>"
     }
     println "</body></html>"
 }
