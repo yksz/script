@@ -1,8 +1,8 @@
 /**
- * Simple web server
+ * Simple file server
  *
  * invoke using
- *    groovy -l 80 web.groovy
+ *    groovy -l 80 fs.groovy
  *       (where 80 is the port to listen for requests upon)
  */
 
@@ -30,13 +30,13 @@ if (line.isEmpty()) {
 }
 
 def processRequest() {
-    if (path.indexOf("..") != -1) //simplistic security
+    if (path.indexOf("..") != -1) // simplistic security
         return
     path = URLDecoder.decode(path, "utf-8")
     file = new File("." + path)
     if (!file.exists()) {
         printHeaders("404 Not Found", "text/html")
-        println "<html><head><h1>404 Not Found</h1></head><body>"
+        println "<html><head><h1>404 Not Found</h1></head></html>"
     } else if (file.isDirectory()) {
         printDirectoryListing(file)
     } else {
